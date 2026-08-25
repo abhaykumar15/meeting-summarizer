@@ -1,179 +1,344 @@
-# 🎙️ Meeting Summarizer
+# MeetFlow — AI Meeting Summarizer
 
-Transcribe meeting audio and generate action-oriented summaries — key decisions,
-discussion highlights, and action items — from a single uploaded audio file.
+> Transform recorded meetings into concise summaries, key decisions, action items, and searchable transcripts.
 
-## Objective
+## 🎥 Working Demo
 
-Given a meeting audio recording, this app:
-1. Transcribes the audio to text (ASR).
-2. Sends the transcript to an LLM to generate a structured summary:
-   key decisions, discussion points, and action items with owners (when identifiable).
-3. Returns the transcript + summary as JSON, viewable in a simple web frontend.
+<p align="center">
+  <a href="https://youtu.be/Rfiw1qawgho">
+    <img src="https://img.youtube.com/vi/Rfiw1qawgho/maxresdefault.jpg" alt="MeetFlow Working Demo" width="850">
+  </a>
+</p>
 
-## Architecture
+<p align="center">
+  <a href="https://youtu.be/Rfiw1qawgho"><strong>▶ Watch the complete working demo</strong></a>
+</p>
 
+---
+
+## 📌 Overview
+
+MeetFlow is an AI-powered meeting summarization application that converts recorded meeting audio into structured and actionable information.
+
+Instead of manually reviewing an entire recording, the application processes the meeting, generates a transcript, and produces useful meeting insights such as:
+
+- Executive summary
+- Key decisions
+- Action items
+- Available action-item owners
+- Available due dates
+- Full transcript
+- Meeting history
+
+The application provides a simple web interface while the backend handles audio processing, transcription, AI-based analysis, and persistence.
+
+---
+
+## ✨ Features
+
+### 🎙️ Meeting Recording Upload
+Upload supported meeting audio/video recordings directly through the web interface.
+
+### 📝 Automatic Transcription
+The application uses **Faster-Whisper** to convert spoken content into text.
+
+### 🧠 AI Meeting Analysis
+The generated transcript is processed by the configured **Groq-powered language model** to extract structured meeting insights.
+
+### 📋 Executive Summary
+Generates a concise overview of the meeting discussion.
+
+### ✅ Key Decisions
+Identifies important decisions made during the meeting.
+
+### 📌 Action Items
+Extracts tasks from the discussion and displays available:
+- Task
+- Owner
+- Due date
+
+### 📜 Full Transcript
+Provides access to the complete generated transcript.
+
+### 🗂️ Meeting History
+Previously processed meetings are stored and can be reopened from the history section.
+
+### 📱 Responsive Interface
+The frontend is designed to work across desktop and smaller screen sizes.
+
+---
+
+## 🏗️ Architecture
+
+```text
+                    ┌──────────────────────┐
+                    │      MeetFlow UI     │
+                    │ HTML / CSS / JS      │
+                    └──────────┬───────────┘
+                               │
+                         HTTP / REST API
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    FastAPI Backend   │
+                    └──────────┬───────────┘
+                               │
+                  ┌────────────┴────────────┐
+                  │                         │
+                  ▼                         ▼
+        ┌──────────────────┐      ┌──────────────────┐
+        │  Faster-Whisper  │      │  Groq LLM        │
+        │ Speech-to-Text   │      │ Meeting Analysis │
+        └────────┬─────────┘      └────────┬─────────┘
+                 │                         │
+                 └────────────┬────────────┘
+                              ▼
+                    ┌──────────────────────┐
+                    │       SQLite         │
+                    │ Meeting Persistence  │
+                    └──────────────────────┘
 ```
-meeting-summarizer/
+
+### Processing Flow
+
+```text
+Meeting Recording
+       │
+       ▼
+    Upload
+       │
+       ▼
+FastAPI Backend
+       │
+       ▼
+Faster-Whisper
+       │
+       ▼
+    Transcript
+       │
+       ▼
+    Groq LLM
+       │
+       ├──► Summary
+       ├──► Key Decisions
+       └──► Action Items
+                │
+                ▼
+             SQLite
+                │
+                ▼
+          Web Interface
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Python, FastAPI |
+| Speech-to-Text | Faster-Whisper |
+| AI Analysis | Groq API / configured LLM |
+| Database | SQLite |
+| API Server | Uvicorn |
+| Environment Configuration | python-dotenv |
+
+---
+
+## 📁 Project Structure
+
+```text
+Meeting-Summarizer/
+│
 ├── backend/
-│   ├── main.py            # FastAPI app — /upload, /meetings, /health endpoints
-│   ├── transcription.py   # ASR — local faster-whisper (no API key, no cost)
-│   ├── summarizer.py      # LLM summary generation via Groq's free API
-│   ├── database.py        # SQLite persistence — stores every processed meeting
-│   ├── models.py          # Pydantic response models
-│   └── config.py          # Env/config loading
+│   ├── main.py
+│   └── ...
+│
 ├── frontend/
-│   └── index.html         # Upload audio, view transcript + summary
+│   └── index.html
+│
 ├── sample_data/
-│   └── README.md          # Where to place a sample meeting audio file for testing
-├── requirements.txt
+│
+├── .env.example
 ├── .gitignore
-└── README.md
+├── LICENSE
+├── README.md
+└── requirements.txt
 ```
 
-## Tech Stack
+---
 
-- **Backend:** Python 3.10+, FastAPI, Uvicorn
-- **ASR:** [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — runs the Whisper model **locally**, free, no API key
-- **LLM:** [Groq](https://console.groq.com/) (`llama-3.1-8b-instant`) via an OpenAI-compatible endpoint — free tier, no credit card required
-- **Frontend:** Plain HTML/CSS/JS (no build step, no framework — keeps the repo dependency-free per submission guidelines)
+## ⚙️ Prerequisites
 
-> Both the ASR and the LLM are free to run: Whisper transcription happens
-> entirely on your machine, and Groq's free tier (no credit card) is enough
-> for demo/grading use.
+- Python 3.10+
+- Git
+- A Groq API key
 
-## Setup
+---
 
-### 1. Clone and install dependencies
+## 🚀 Installation
+
+### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/abhaykumar15/meeting-summarizer.git
 cd meeting-summarizer
+```
+
+### 2. Create a virtual environment
+
+#### Windows PowerShell
+
+```powershell
 python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
+venv\Scripts\activate
+```
+
+#### Linux / macOS
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-The first run downloads the local Whisper model weights (cached afterward),
-so the first transcription will be slower than later ones.
+---
 
-### 2. Configure your (free) Groq API key
+## 🔐 Environment Configuration
 
-Create a `.env` file in the project root (this file is git-ignored and must
-**never** be committed):
+Create a `.env` file in the project root:
 
-```
-GROQ_API_KEY=gsk-your-key-here
+```env
+GROQ_API_KEY=your_groq_api_key
 ```
 
-Get a free key (no credit card needed) at https://console.groq.com/keys —
-sign-up takes under a minute.
+Use `.env.example` as the template.
 
-### 3. Run the backend
+**Never commit your `.env` file or expose your API key publicly.**
 
-```bash
-uvicorn backend.main:app --reload --port 8000
+---
+
+## ▶️ Running the Application
+
+MeetFlow uses a separate backend API server and frontend development server.
+
+### Terminal 1 — Backend
+
+```powershell
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-The API will be live at `http://localhost:8000`. Interactive docs at
-`http://localhost:8000/docs`.
+Backend:
 
-### 4. Open the frontend
-
-Simply open `frontend/index.html` in a browser (or serve it with any static
-server). Upload a `.mp3`/`.wav`/`.m4a` meeting recording and view the
-transcript, key decisions, and action items.
-
-## API
-
-### `POST /upload`
-
-**Form-data:** `file` — the audio file (mp3, wav, m4a, mp4)
-
-**Response:**
-```json
-{
-  "transcript": "Full meeting transcript...",
-  "summary": "2-3 sentence overview of the meeting...",
-  "key_decisions": ["Decision 1", "Decision 2"],
-  "action_items": [
-    {"task": "Send updated proposal", "owner": "Priya", "due": "Friday"},
-    {"task": "Review budget draft", "owner": "Unassigned", "due": null}
-  ]
-}
+```text
+http://localhost:8000
 ```
 
-Every processed meeting is also saved to a local SQLite database
-(`data/meetings.db`, created automatically on first run) so it can be
-retrieved later without re-running ASR/LLM on the same audio.
+FastAPI documentation:
 
-### `GET /meetings`
-
-Returns a list of every previously processed meeting (id, filename,
-timestamp, and summary — not the full transcript):
-
-```json
-[
-  {"id": 2, "filename": "client_sync.wav", "created_at": "2026-08-20T08:37:01Z", "summary": "..."},
-  {"id": 1, "filename": "standup.mp3", "created_at": "2026-08-20T08:30:00Z", "summary": "..."}
-]
+```text
+http://localhost:8000/docs
 ```
 
-### `GET /meetings/{id}`
+### Terminal 2 — Frontend
 
-Returns the full stored record (transcript, summary, key decisions, action
-items) for one meeting. Returns `404` if the id doesn't exist.
+From the project root:
 
-### `GET /health`
-
-Simple liveness check — returns `{"status": "ok"}`.
-
-## LLM Prompting Approach
-
-The transcript is passed to the LLM with an instruction to extract:
-- A short overview summary
-- Key decisions made during the meeting
-- Action items, each with an owner and due date **if mentioned**, otherwise
-  marked `null`/`"Unassigned"`
-
-The model is asked to return **strict JSON** so the backend can parse it
-reliably without brittle text parsing. See `backend/summarizer.py` for the
-exact prompt template.
-
-## Testing With Sample Audio
-
-Place any short `.mp3`/`.wav` meeting recording (even a 1–2 minute voice memo
-works) in `sample_data/` and upload it via the frontend or `curl`:
-
-```bash
-curl -X POST http://localhost:8000/upload \
-  -F "file=@sample_data/your_sample.mp3"
+```powershell
+python -m http.server 8080 --directory frontend
 ```
 
-## Notes on Submission Hygiene
+Open:
 
-This repo intentionally excludes (see `.gitignore`):
-- `venv/`, `__pycache__/` — environment/build artifacts
-- `.env` — secrets (API key)
-- `.vscode/`, `.idea/` — editor-specific files
-- `data/` — the local SQLite database, generated at runtime, not source code
+```text
+http://localhost:8080
+```
 
-Only the minimal dependencies required for ASR + LLM summarization + the API
-server are listed in `requirements.txt`.
+---
 
-## Evaluation Focus Checklist
+## 🔌 API Endpoints
 
-- ✅ **Transcription accuracy** — local Whisper via `faster-whisper`
-- ✅ **Summary quality** — structured JSON output: overview, decisions, action items
-- ✅ **LLM prompt effectiveness** — explicit, strict-JSON prompt in `summarizer.py`
-- ✅ **Code structure** — separated concerns (transcription / summarization / storage / API / config)
-- ✅ **Backend storage** — every processed meeting persists to SQLite (`backend/database.py`), retrievable via `GET /meetings`
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/health` | Check backend availability |
+| POST | `/upload` | Upload and process a meeting recording |
+| GET | `/meetings` | Retrieve meeting history |
+| GET | `/meetings/{id}` | Retrieve a specific meeting |
 
-## Demo Video
+Interactive API documentation:
 
-https://github.com/user-attachments/assets/3b861a5c-63a4-4ac6-9f31-15ef7cec5dd1
+```text
+http://localhost:8000/docs
+```
 
+---
 
+## 🧪 Testing the Application
 
+1. Start the backend.
+2. Start the frontend.
+3. Open `http://localhost:8080`.
+4. Upload a meeting recording.
+5. Start the analysis.
+6. Wait for transcription and AI processing.
+7. Verify the summary.
+8. Verify key decisions.
+9. Verify action items.
+10. Review the transcript.
+11. Open Meeting History.
+12. Reopen the processed meeting.
 
+---
 
+## 🎬 Demo
+
+The complete working demonstration shows:
+
+**Upload → Transcription → AI Analysis → Summary → Decisions → Action Items → Transcript → Meeting History**
+
+### ▶️ Watch the demo
+
+[**Watch MeetFlow — Complete Working Demo on YouTube**](https://youtu.be/Rfiw1qawgho)
+
+---
+
+## 🔒 Security Notes
+
+- API credentials are stored in environment variables.
+- `.env` is excluded from Git using `.gitignore`.
+- API keys should never be committed to the repository.
+- Uploaded recordings are intended for local application use.
+
+---
+
+## 🔮 Future Improvements
+
+- Speaker diarization and speaker labels
+- Real-time meeting summarization
+- Search across historical meetings
+- Export summaries to PDF or DOCX
+- Authentication and user accounts
+- Cloud storage integration
+- Calendar integration
+- Improved multilingual transcription
+- Background processing for large recordings
+
+---
+
+## 📄 License
+
+This project is provided under the terms specified in the included `LICENSE` file.
+
+---
+
+## 👨‍💻 Author
+
+**Abhay Kumar**
+
+GitHub: https://github.com/abhaykumar15
