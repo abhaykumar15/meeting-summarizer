@@ -1,3 +1,13 @@
+
+
+https://github.com/user-attachments/assets/23c33260-d576-46fb-96bc-86a51438f96b
+
+
+
+
+
+
+
 # MeetFlow — AI Meeting Summarizer
 
 > Transform recorded meetings into concise summaries, key decisions, action items, and searchable transcripts.
