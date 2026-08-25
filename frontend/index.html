@@ -1,511 +1,1423 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meeting Summarizer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --ink: #14161B;
-    --ink-raised: #1D2027;
-    --paper: #ECE9E2;
-    --paper-dim: #9A9C9E;
-    --amber: #E8A33D;
-    --amber-dim: #6B5327;
-    --line: #2C303A;
-    --good: #7FB88A;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetFlow — Meeting Intelligence</title>
 
-  * { box-sizing: border-box; }
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-  body {
-    margin: 0;
-    background: var(--ink);
-    color: var(--paper);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
+        :root {
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --border: #e5e7eb;
+            --text: #172033;
+            --muted: #6b7280;
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-soft: #eef2ff;
+            --success: #059669;
+            --success-soft: #ecfdf5;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --danger-soft: #fef2f2;
+            --shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+            --radius: 16px;
+        }
 
-  .wrap {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 56px 24px 96px;
-  }
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
 
-  header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 8px;
-  }
+        button,
+        input {
+            font: inherit;
+        }
 
-  .rec-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--amber);
-    box-shadow: 0 0 0 0 rgba(232,163,61,0.6);
-    animation: pulse 2.4s infinite;
-    flex-shrink: 0;
-  }
+        button {
+            cursor: pointer;
+        }
 
-  @keyframes pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(232,163,61,0.5); }
-    70%  { box-shadow: 0 0 0 10px rgba(232,163,61,0); }
-    100% { box-shadow: 0 0 0 0 rgba(232,163,61,0); }
-  }
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
 
-  h1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 700;
-    font-size: 28px;
-    letter-spacing: -0.01em;
-    margin: 0;
-  }
+        /* SIDEBAR */
 
-  .sub {
-    color: var(--paper-dim);
-    font-size: 14.5px;
-    margin: 0 0 40px 24px;
-    line-height: 1.5;
-  }
+        .sidebar {
+            width: 250px;
+            background: #111827;
+            color: #fff;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 20;
+        }
 
-  .panel {
-    background: var(--ink-raised);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 28px;
-    margin-bottom: 20px;
-  }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px 28px;
+        }
 
-  .drop {
-    border: 1.5px dashed var(--line);
-    border-radius: 10px;
-    padding: 36px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
-  }
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 17px;
+        }
 
-  .drop:hover, .drop.drag {
-    border-color: var(--amber);
-    background: rgba(232,163,61,0.05);
-  }
+        .brand-name {
+            font-size: 20px;
+            font-weight: 750;
+            letter-spacing: -0.5px;
+        }
 
-  .drop input { display: none; }
+        .brand-subtitle {
+            color: #9ca3af;
+            font-size: 11px;
+            margin-top: 2px;
+        }
 
-  .drop-label {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
+        .nav-title {
+            color: #6b7280;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            padding: 0 12px 9px;
+        }
 
-  .drop-hint {
-    font-size: 13px;
-    color: var(--paper-dim);
-  }
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
-  .filename {
-    margin-top: 14px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    color: var(--amber);
-    word-break: break-all;
-  }
+        .nav-btn {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            color: #9ca3af;
+            text-align: left;
+            padding: 11px 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            transition: 0.2s ease;
+        }
 
-  button.go {
-    width: 100%;
-    margin-top: 18px;
-    background: var(--amber);
-    color: var(--ink);
-    border: none;
-    border-radius: 8px;
-    padding: 13px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-  }
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: #1f2937;
+            color: #fff;
+        }
 
-  button.go:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
+        .nav-icon {
+            width: 18px;
+            text-align: center;
+        }
 
-  button.go:not(:disabled):hover { opacity: 0.88; }
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 14px 12px;
+            border-top: 1px solid #1f2937;
+        }
 
-  /* Waveform loading state — the signature element */
-  .waveform {
-    display: none;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 4px;
-    height: 40px;
-    margin: 18px 0 6px;
-  }
+        .engine-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            font-size: 12px;
+        }
 
-  .waveform.active { display: flex; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
 
-  .waveform span {
-    width: 4px;
-    background: var(--amber);
-    border-radius: 2px;
-    animation: bar 1.1s ease-in-out infinite;
-  }
+        /* MAIN */
 
-  .waveform span:nth-child(1) { height: 30%; animation-delay: 0s; }
-  .waveform span:nth-child(2) { height: 60%; animation-delay: 0.1s; }
-  .waveform span:nth-child(3) { height: 90%; animation-delay: 0.2s; }
-  .waveform span:nth-child(4) { height: 45%; animation-delay: 0.3s; }
-  .waveform span:nth-child(5) { height: 75%; animation-delay: 0.4s; }
-  .waveform span:nth-child(6) { height: 35%; animation-delay: 0.5s; }
-  .waveform span:nth-child(7) { height: 65%; animation-delay: 0.6s; }
-  .waveform span:nth-child(8) { height: 20%; animation-delay: 0.7s; }
+        .main {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
 
-  @keyframes bar {
-    0%, 100% { transform: scaleY(0.4); }
-    50% { transform: scaleY(1); }
-  }
+        .topbar {
+            height: 72px;
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 34px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+        }
 
-  .status-text {
-    text-align: center;
-    font-size: 13px;
-    color: var(--paper-dim);
-    font-family: 'IBM Plex Mono', monospace;
-  }
+        .page-heading h1 {
+            font-size: 18px;
+            letter-spacing: -0.3px;
+        }
 
-  .eyebrow {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--amber);
-    margin: 0 0 10px;
-  }
+        .page-heading p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
 
-  .summary-text {
-    font-size: 15.5px;
-    line-height: 1.65;
-    color: var(--paper);
-    margin: 0 0 22px;
-  }
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--success);
+            font-size: 12px;
+            font-weight: 600;
+        }
 
-  ul.list {
-    margin: 0 0 22px;
-    padding: 0;
-    list-style: none;
-  }
+        .content {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 36px 34px 60px;
+        }
 
-  ul.list li {
-    position: relative;
-    padding-left: 22px;
-    margin-bottom: 10px;
-    font-size: 14.5px;
-    line-height: 1.5;
-  }
+        /* HERO */
 
-  ul.list.decisions li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 7px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--good);
-  }
+        .hero {
+            margin-bottom: 28px;
+        }
 
-  .action-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0;
-    border-top: 1px solid var(--line);
-    font-size: 14.5px;
-  }
+        .hero h2 {
+            font-size: 32px;
+            line-height: 1.15;
+            letter-spacing: -1.1px;
+        }
 
-  .action-item:first-child { border-top: none; }
+        .hero p {
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: 14px;
+        }
 
-  .action-item .task { flex: 1; }
+        /* UPLOAD */
 
-  .action-item .meta {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    color: var(--paper-dim);
-    white-space: nowrap;
-    text-align: right;
-  }
+        .upload-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 26px;
+        }
 
-  .transcript-box {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--paper-dim);
-    background: var(--ink);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 18px;
-    max-height: 260px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-  }
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            background: var(--surface-soft);
+            min-height: 235px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 28px;
+            transition: 0.2s ease;
+        }
 
-  .error {
-    background: rgba(200,80,80,0.1);
-    border: 1px solid rgba(200,80,80,0.4);
-    color: #E08585;
-    border-radius: 8px;
-    padding: 14px 16px;
-    font-size: 13.5px;
-    margin-bottom: 20px;
-    display: none;
-  }
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
 
-  .hidden { display: none; }
+        .upload-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            display: grid;
+            place-items: center;
+            font-size: 25px;
+            margin-bottom: 14px;
+        }
 
-  .history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 14px;
-    padding: 12px 0;
-    border-top: 1px solid var(--line);
-    cursor: pointer;
-  }
+        .drop-zone h3 {
+            font-size: 16px;
+        }
 
-  .history-item:first-child { border-top: none; }
+        .drop-zone p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 6px;
+        }
 
-  .history-item:hover .history-summary { color: var(--amber); }
+        .choose-btn {
+            border: 0;
+            background: var(--primary);
+            color: white;
+            border-radius: 9px;
+            padding: 10px 18px;
+            margin-top: 17px;
+            font-weight: 650;
+            transition: 0.2s ease;
+        }
 
-  .history-summary {
-    font-size: 14px;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    transition: color 0.15s ease;
-  }
+        .choose-btn:hover {
+            background: var(--primary-dark);
+        }
 
-  .history-meta {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    color: var(--paper-dim);
-    white-space: nowrap;
-  }
-</style>
+        .formats {
+            margin-top: 12px;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .selected-file {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 16px;
+            padding: 13px 15px;
+            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            border-radius: 10px;
+        }
+
+        .selected-file.show {
+            display: flex;
+        }
+
+        .file-info {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-symbol {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            display: grid;
+            place-items: center;
+        }
+
+        .file-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .remove-file {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .analyze-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 18px;
+        }
+
+        .analyze-btn {
+            border: 0;
+            background: var(--text);
+            color: white;
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            gap: 9px;
+            transition: 0.2s ease;
+        }
+
+        .analyze-btn.show {
+            display: inline-flex;
+        }
+
+        .analyze-btn:hover {
+            background: #263247;
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* PROCESSING */
+
+        .processing {
+            display: none;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            border-radius: 10px;
+        }
+
+        .processing.show {
+            display: block;
+        }
+
+        .processing-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #c7d2fe;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .progress-track {
+            height: 5px;
+            background: #dbeafe;
+            border-radius: 99px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+
+        /* ERROR */
+
+        .error-box {
+            display: none;
+            margin-top: 16px;
+            background: var(--danger-soft);
+            border: 1px solid #fecaca;
+            color: var(--danger);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 12px;
+        }
+
+        .error-box.show {
+            display: block;
+        }
+
+        /* RESULTS */
+
+        #results {
+            display: none;
+            margin-top: 32px;
+        }
+
+        #results.show {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+        }
+
+        .section-header span {
+            font-size: 11px;
+            color: var(--success);
+            background: var(--success-soft);
+            padding: 5px 9px;
+            border-radius: 99px;
+            font-weight: 650;
+        }
+
+        .summary-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-label {
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 11px;
+        }
+
+        .summary-text {
+            font-size: 15px;
+            line-height: 1.75;
+            color: #374151;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+        }
+
+        .result-card h3 {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .bullet {
+            flex: 0 0 auto;
+            width: 7px;
+            height: 7px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-top: 6px;
+        }
+
+        .action-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            background: var(--surface-soft);
+        }
+
+        .action-task {
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .action-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .meta-pill {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 3px 7px;
+            border-radius: 6px;
+        }
+
+        /* TRANSCRIPT */
+
+        .transcript-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+        }
+
+        .transcript {
+            max-height: 380px;
+            overflow-y: auto;
+            background: var(--surface-soft);
+            border-radius: 10px;
+            padding: 18px;
+            color: #4b5563;
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        /* HISTORY */
+
+        #history {
+            display: none;
+        }
+
+        #history.show {
+            display: block;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            transition: 0.2s ease;
+        }
+
+        .history-item:hover {
+            border-color: #c7d2fe;
+            box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
+        }
+
+        .history-title {
+            font-weight: 650;
+            font-size: 13px;
+        }
+
+        .history-date {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .open-btn {
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text);
+            border-radius: 8px;
+            padding: 7px 12px;
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .open-btn:hover {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border-color: #c7d2fe;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 35px;
+            font-size: 13px;
+            background: white;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        /* RESPONSIVE */
+
+        .mobile-header {
+            display: none;
+        }
+
+        @media (max-width: 850px) {
+            .sidebar {
+                width: 210px;
+            }
+
+            .main {
+                margin-left: 210px;
+                width: calc(100% - 210px);
+            }
+
+            .content {
+                padding: 28px 22px 50px;
+            }
+
+            .topbar {
+                padding: 0 22px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .topbar {
+                height: 64px;
+            }
+
+            .content {
+                padding: 24px 15px 45px;
+            }
+
+            .hero h2 {
+                font-size: 26px;
+            }
+
+            .upload-card {
+                padding: 15px;
+            }
+
+            .drop-zone {
+                min-height: 205px;
+                padding: 20px;
+            }
+
+            .analyze-row {
+                justify-content: stretch;
+            }
+
+            .analyze-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .history-item {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .open-btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header>
-      <div class="rec-dot"></div>
-      <h1>Meeting Summarizer</h1>
-    </header>
-    <p class="sub">Upload a meeting recording. Get the transcript, key decisions, and action items back — automatically.</p>
 
-    <div class="panel">
-      <label class="drop" id="dropZone">
-        <input type="file" id="fileInput" accept=".mp3,.wav,.m4a,.mp4,.mpeg,.mpga,.webm">
-        <div class="drop-label" id="dropLabel">Click to choose an audio file</div>
-        <div class="drop-hint">or drag &amp; drop — mp3, wav, m4a, mp4 (max 25MB)</div>
-        <div class="filename" id="filename"></div>
-      </label>
+<div class="app">
 
-      <div class="waveform" id="waveform">
-        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-      </div>
-      <div class="status-text hidden" id="statusText">Transcribing audio…</div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">M</div>
+            <div>
+                <div class="brand-name">MeetFlow</div>
+                <div class="brand-subtitle">Meeting Intelligence</div>
+            </div>
+        </div>
 
-      <button class="go" id="goBtn" disabled>Summarize Meeting</button>
-    </div>
+        <div class="nav-title">Workspace</div>
 
-    <div class="error" id="errorBox"></div>
+        <nav class="nav">
+            <button class="nav-btn active" id="newMeetingNav">
+                <span class="nav-icon">＋</span>
+                <span>New Meeting</span>
+            </button>
 
-    <div class="panel hidden" id="resultsPanel">
-      <p class="eyebrow">Overview</p>
-      <p class="summary-text" id="summaryText"></p>
+            <button class="nav-btn" id="historyNav">
+                <span class="nav-icon">◷</span>
+                <span>Meeting History</span>
+            </button>
+        </nav>
 
-      <p class="eyebrow">Key Decisions</p>
-      <ul class="list decisions" id="decisionsList"></ul>
+        <div class="sidebar-footer">
+            <div class="engine-status">
+                <span class="status-dot"></span>
+                AI engine ready
+            </div>
+        </div>
+    </aside>
 
-      <p class="eyebrow">Action Items</p>
-      <div id="actionsList"></div>
-    </div>
+    <!-- MAIN -->
+    <main class="main">
 
-    <div class="panel hidden" id="transcriptPanel">
-      <p class="eyebrow">Full Transcript</p>
-      <div class="transcript-box" id="transcriptBox"></div>
-    </div>
+        <header class="topbar">
+            <div class="page-heading">
+                <h1 id="pageTitle">New Meeting</h1>
+                <p>Convert conversations into actionable insights.</p>
+            </div>
 
-    <div class="panel" id="historyPanel">
-      <p class="eyebrow">Past Meetings</p>
-      <div id="historyList"><p style="color: var(--paper-dim); font-size: 13.5px;">Loading…</p></div>
-    </div>
-  </div>
+            <div class="api-status">
+                <span class="status-dot"></span>
+                System online
+            </div>
+        </header>
+
+        <div class="content">
+
+            <!-- NEW MEETING -->
+            <section id="newMeetingSection">
+
+                <div class="hero">
+                    <h2>What happened in your meeting?</h2>
+                    <p>Upload a recording and let MeetFlow extract the important details.</p>
+                </div>
+
+                <div class="upload-card">
+
+                    <div class="drop-zone" id="dropZone">
+
+                        <div class="upload-icon">↑</div>
+
+                        <h3>Drop your meeting recording here</h3>
+
+                        <p>or choose a file from your computer</p>
+
+                        <button class="choose-btn" id="chooseBtn">
+                            Choose Recording
+                        </button>
+
+                        <div class="formats">
+                            MP3 · WAV · M4A · MP4 · Maximum 100 MB
+                        </div>
+
+                    </div>
+
+                    <input
+                        type="file"
+                        id="fileInput"
+                        accept="audio/*,video/mp4,video/webm"
+                    >
+
+                    <div class="selected-file" id="selectedFile">
+
+                        <div class="file-info">
+                            <div class="file-symbol">♪</div>
+
+                            <div>
+                                <div class="file-name" id="fileName"></div>
+                                <div class="file-size" id="fileSize"></div>
+                            </div>
+                        </div>
+
+                        <button class="remove-file" id="removeFile" title="Remove file">
+                            ×
+                        </button>
+
+                    </div>
+
+                    <div class="analyze-row">
+                        <button class="analyze-btn" id="analyzeBtn">
+                            <span>Analyze Meeting</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+
+                    <div class="processing" id="processing">
+
+                        <div class="processing-top">
+                            <span id="processingText">Processing meeting...</span>
+                            <div class="spinner"></div>
+                        </div>
+
+                        <div class="progress-track">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+
+                    </div>
+
+                    <div class="error-box" id="errorBox"></div>
+
+                </div>
+
+                <!-- RESULTS -->
+                <div id="results">
+
+                    <div class="section-header">
+                        <h2>Meeting Insights</h2>
+                        <span>Analysis complete</span>
+                    </div>
+
+                    <div class="summary-card">
+                        <div class="card-label">Executive Summary</div>
+                        <div class="summary-text" id="summaryText"></div>
+                    </div>
+
+                    <div class="result-grid">
+
+                        <div class="result-card">
+                            <div class="card-label">Key Decisions</div>
+                            <div class="list" id="decisionsList"></div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="card-label">Action Items</div>
+                            <div class="list" id="actionsList"></div>
+                        </div>
+
+                    </div>
+
+                    <div class="transcript-card">
+
+                        <div class="card-label">Transcript</div>
+
+                        <div class="transcript" id="transcriptText"></div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- HISTORY -->
+            <section id="history">
+
+                <div class="hero">
+                    <h2>Meeting History</h2>
+                    <p>Access previously processed meetings and their insights.</p>
+                </div>
+
+                <div class="history-list" id="historyList">
+                    <div class="empty">Loading meetings...</div>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
 
 <script>
-  // Point this at your running backend (see backend/main.py).
-  const API_BASE = "http://localhost:8000";
-  const API_URL = `${API_BASE}/upload`;
+    const API_BASE = "http://localhost:8000";
 
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
-  const dropLabel = document.getElementById('dropLabel');
-  const filenameEl = document.getElementById('filename');
-  const goBtn = document.getElementById('goBtn');
-  const waveform = document.getElementById('waveform');
-  const statusText = document.getElementById('statusText');
-  const errorBox = document.getElementById('errorBox');
-  const resultsPanel = document.getElementById('resultsPanel');
-  const transcriptPanel = document.getElementById('transcriptPanel');
+    const fileInput = document.getElementById("fileInput");
+    const chooseBtn = document.getElementById("chooseBtn");
+    const dropZone = document.getElementById("dropZone");
+    const selectedFile = document.getElementById("selectedFile");
+    const fileName = document.getElementById("fileName");
+    const fileSize = document.getElementById("fileSize");
+    const removeFile = document.getElementById("removeFile");
+    const analyzeBtn = document.getElementById("analyzeBtn");
 
-  let selectedFile = null;
+    const processing = document.getElementById("processing");
+    const processingText = document.getElementById("processingText");
+    const progressBar = document.getElementById("progressBar");
+    const errorBox = document.getElementById("errorBox");
 
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length) setFile(e.target.files[0]);
-  });
+    const results = document.getElementById("results");
+    const summaryText = document.getElementById("summaryText");
+    const decisionsList = document.getElementById("decisionsList");
+    const actionsList = document.getElementById("actionsList");
+    const transcriptText = document.getElementById("transcriptText");
 
-  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('drag');
-    if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
-  });
+    const newMeetingSection = document.getElementById("newMeetingSection");
+    const historySection = document.getElementById("history");
+    const historyList = document.getElementById("historyList");
 
-  function setFile(file) {
-    selectedFile = file;
-    filenameEl.textContent = file.name;
-    dropLabel.textContent = "Ready to summarize";
-    goBtn.disabled = false;
-  }
+    const newMeetingNav = document.getElementById("newMeetingNav");
+    const historyNav = document.getElementById("historyNav");
+    const pageTitle = document.getElementById("pageTitle");
 
-  goBtn.addEventListener('click', async () => {
-    if (!selectedFile) return;
+    let selectedAudio = null;
 
-    errorBox.style.display = 'none';
-    resultsPanel.classList.add('hidden');
-    transcriptPanel.classList.add('hidden');
-    waveform.classList.add('active');
-    statusText.classList.remove('hidden');
-    statusText.textContent = "Transcribing and summarizing…";
-    goBtn.disabled = true;
+    function formatBytes(bytes) {
+        if (!bytes) return "0 Bytes";
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
+        const units = ["Bytes", "KB", "MB", "GB"];
+        const index = Math.floor(Math.log(bytes) / Math.log(1024));
 
-    try {
-      const res = await fetch(API_URL, { method: 'POST', body: formData });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || 'Something went wrong processing the audio.');
-      }
-
-      renderResults(data);
-      loadHistory();
-    } catch (err) {
-      errorBox.textContent = "Couldn't process that file: " + err.message;
-      errorBox.style.display = 'block';
-    } finally {
-      waveform.classList.remove('active');
-      statusText.classList.add('hidden');
-      goBtn.disabled = false;
-    }
-  });
-
-  async function loadHistory() {
-    const historyList = document.getElementById('historyList');
-    try {
-      const res = await fetch(`${API_BASE}/meetings`);
-      const meetings = await res.json();
-
-      if (!res.ok) throw new Error('Could not load history.');
-
-      if (!meetings.length) {
-        historyList.innerHTML = '<p style="color: var(--paper-dim); font-size: 13.5px;">No meetings processed yet — upload one above.</p>';
-        return;
-      }
-
-      historyList.innerHTML = '';
-      meetings.forEach(m => {
-        const row = document.createElement('div');
-        row.className = 'history-item';
-        const when = new Date(m.created_at).toLocaleString();
-        row.innerHTML = `
-          <div class="history-summary">${escapeHtml(m.summary || m.filename)}</div>
-          <div class="history-meta">${escapeHtml(when)}</div>
-        `;
-        row.addEventListener('click', () => loadMeeting(m.id));
-        historyList.appendChild(row);
-      });
-    } catch (err) {
-      historyList.innerHTML = `<p style="color: var(--paper-dim); font-size: 13.5px;">Backend not reachable yet — start it and refresh.</p>`;
-    }
-  }
-
-  async function loadMeeting(id) {
-    try {
-      const res = await fetch(`${API_BASE}/meetings/${id}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Could not load that meeting.');
-      renderResults(data);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      errorBox.textContent = err.message;
-      errorBox.style.display = 'block';
-    }
-  }
-
-  // Load history as soon as the page opens.
-  loadHistory();
-
-  function renderResults(data) {
-    document.getElementById('summaryText').textContent = data.summary || "No summary generated.";
-
-    const decisionsList = document.getElementById('decisionsList');
-    decisionsList.innerHTML = '';
-    if (data.key_decisions && data.key_decisions.length) {
-      data.key_decisions.forEach(d => {
-        const li = document.createElement('li');
-        li.textContent = d;
-        decisionsList.appendChild(li);
-      });
-    } else {
-      decisionsList.innerHTML = '<li style="color: var(--paper-dim)">No explicit decisions detected.</li>';
+        return `${(bytes / Math.pow(1024, index)).toFixed(1)} ${units[index]}`;
     }
 
-    const actionsList = document.getElementById('actionsList');
-    actionsList.innerHTML = '';
-    if (data.action_items && data.action_items.length) {
-      data.action_items.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'action-item';
-        row.innerHTML = `
-          <div class="task">${escapeHtml(item.task)}</div>
-          <div class="meta">${escapeHtml(item.owner || 'Unassigned')}${item.due ? ' · ' + escapeHtml(item.due) : ''}</div>
-        `;
-        actionsList.appendChild(row);
-      });
-    } else {
-      actionsList.innerHTML = '<p style="color: var(--paper-dim); font-size: 14px;">No action items detected.</p>';
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.classList.add("show");
     }
 
-    document.getElementById('transcriptBox').textContent = data.transcript || '';
+    function hideError() {
+        errorBox.textContent = "";
+        errorBox.classList.remove("show");
+    }
 
-    resultsPanel.classList.remove('hidden');
-    transcriptPanel.classList.remove('hidden');
-  }
+    function setFile(file) {
+        if (!file) return;
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
+        const maxSize = 100 * 1024 * 1024;
+
+        if (file.size > maxSize) {
+            showError("The selected file is larger than 100 MB.");
+            return;
+        }
+
+        const allowed = [
+            "audio/mpeg",
+            "audio/wav",
+            "audio/x-wav",
+            "audio/mp4",
+            "audio/x-m4a",
+            "video/mp4",
+            "video/webm",
+            "audio/webm",
+            "audio/ogg"
+        ];
+
+        const extension = file.name.split(".").pop().toLowerCase();
+
+        const allowedExtensions = [
+            "mp3",
+            "wav",
+            "m4a",
+            "mp4",
+            "webm",
+            "ogg"
+        ];
+
+        if (!allowed.includes(file.type) && !allowedExtensions.includes(extension)) {
+            showError("Please select a supported audio or video file.");
+            return;
+        }
+
+        hideError();
+
+        selectedAudio = file;
+
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+
+        selectedFile.classList.add("show");
+        analyzeBtn.classList.add("show");
+
+        dropZone.style.display = "none";
+    }
+
+    function resetFile() {
+        selectedAudio = null;
+        fileInput.value = "";
+
+        selectedFile.classList.remove("show");
+        analyzeBtn.classList.remove("show");
+
+        dropZone.style.display = "flex";
+
+        hideError();
+    }
+
+    chooseBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        fileInput.click();
+    });
+
+    dropZone.addEventListener("click", () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length) {
+            setFile(fileInput.files[0]);
+        }
+    });
+
+    removeFile.addEventListener("click", resetFile);
+
+    dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+
+        dropZone.classList.remove("dragover");
+
+        const file = event.dataTransfer.files[0];
+
+        if (file) {
+            setFile(file);
+        }
+    });
+
+    async function analyzeMeeting() {
+
+        if (!selectedAudio) {
+            showError("Please select a meeting recording first.");
+            return;
+        }
+
+        hideError();
+
+        analyzeBtn.disabled = true;
+        processing.classList.add("show");
+        results.classList.remove("show");
+
+        progressBar.style.width = "10%";
+        processingText.textContent = "Uploading meeting recording...";
+
+        const formData = new FormData();
+        formData.append("file", selectedAudio);
+
+        try {
+
+            progressBar.style.width = "25%";
+            processingText.textContent = "Transcribing audio...";
+
+            const response = await fetch(`${API_BASE}/upload`, {
+                method: "POST",
+                body: formData
+            });
+
+            progressBar.style.width = "65%";
+
+            if (!response.ok) {
+
+                let message = `Request failed with status ${response.status}.`;
+
+                try {
+                    const errorData = await response.json();
+
+                    if (errorData.detail) {
+                        message = errorData.detail;
+                    }
+                } catch (_) {}
+
+                throw new Error(message);
+            }
+
+            processingText.textContent = "Generating meeting insights...";
+
+            const data = await response.json();
+
+            progressBar.style.width = "100%";
+
+            renderResults(data);
+
+            setTimeout(() => {
+                processing.classList.remove("show");
+                results.classList.add("show");
+            }, 400);
+
+            loadMeetings();
+
+        } catch (error) {
+
+            processing.classList.remove("show");
+
+            showError(
+                error.message ||
+                "Something went wrong while processing the meeting."
+            );
+
+        } finally {
+
+            analyzeBtn.disabled = false;
+        }
+    }
+
+    analyzeBtn.addEventListener("click", analyzeMeeting);
+
+    function renderResults(data) {
+
+        summaryText.textContent =
+            data.summary ||
+            "No summary was generated for this meeting.";
+
+        decisionsList.innerHTML = "";
+
+        const decisions = Array.isArray(data.key_decisions)
+            ? data.key_decisions
+            : [];
+
+        if (!decisions.length) {
+
+            decisionsList.innerHTML =
+                '<div class="empty">No key decisions identified.</div>';
+
+        } else {
+
+            decisions.forEach(decision => {
+
+                const item = document.createElement("div");
+                item.className = "list-item";
+
+                const bullet = document.createElement("span");
+                bullet.className = "bullet";
+
+                const text = document.createElement("span");
+                text.textContent = decision;
+
+                item.appendChild(bullet);
+                item.appendChild(text);
+
+                decisionsList.appendChild(item);
+            });
+        }
+
+        actionsList.innerHTML = "";
+
+        const actions = Array.isArray(data.action_items)
+            ? data.action_items
+            : [];
+
+        if (!actions.length) {
+
+            actionsList.innerHTML =
+                '<div class="empty">No action items identified.</div>';
+
+        } else {
+
+            actions.forEach(action => {
+
+                const item = document.createElement("div");
+                item.className = "action-item";
+
+                const task = document.createElement("div");
+                task.className = "action-task";
+                task.textContent = action.task || "Action item";
+
+                const meta = document.createElement("div");
+                meta.className = "action-meta";
+
+                if (action.owner) {
+                    const owner = document.createElement("span");
+                    owner.className = "meta-pill";
+                    owner.textContent = `Owner: ${action.owner}`;
+                    meta.appendChild(owner);
+                }
+
+                if (action.due) {
+                    const due = document.createElement("span");
+                    due.className = "meta-pill";
+                    due.textContent = `Due: ${action.due}`;
+                    meta.appendChild(due);
+                }
+
+                item.appendChild(task);
+                item.appendChild(meta);
+
+                actionsList.appendChild(item);
+            });
+        }
+
+        transcriptText.textContent =
+            data.transcript ||
+            "No transcript available.";
+    }
+
+    async function loadMeetings() {
+
+        try {
+
+            const response = await fetch(`${API_BASE}/meetings`);
+
+            if (!response.ok) {
+                throw new Error("Unable to load meeting history.");
+            }
+
+            const meetings = await response.json();
+
+            renderMeetings(meetings);
+
+        } catch (error) {
+
+            historyList.innerHTML = `
+                <div class="empty">
+                    Unable to load meeting history.
+                </div>
+            `;
+        }
+    }
+
+    function renderMeetings(meetings) {
+
+        historyList.innerHTML = "";
+
+        if (!Array.isArray(meetings) || !meetings.length) {
+
+            historyList.innerHTML = `
+                <div class="empty">
+                    No meetings have been processed yet.
+                </div>
+            `;
+
+            return;
+        }
+
+        meetings.forEach(meeting => {
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "history-item";
+
+            const info = document.createElement("div");
+
+            const title = document.createElement("div");
+            title.className = "history-title";
+            title.textContent =
+                meeting.filename ||
+                meeting.title ||
+                `Meeting #${meeting.id}`;
+
+            const date = document.createElement("div");
+            date.className = "history-date";
+
+            date.textContent =
+                meeting.created_at ||
+                meeting.date ||
+                "";
+
+            info.appendChild(title);
+            info.appendChild(date);
+
+            const button = document.createElement("button");
+            button.className = "open-btn";
+            button.textContent = "Open";
+
+            button.addEventListener("click", () => {
+                openMeeting(meeting.id);
+            });
+
+            wrapper.appendChild(info);
+            wrapper.appendChild(button);
+
+            historyList.appendChild(wrapper);
+        });
+    }
+
+    async function openMeeting(id) {
+
+        try {
+
+            const response =
+                await fetch(`${API_BASE}/meetings/${id}`);
+
+            if (!response.ok) {
+                throw new Error("Unable to open this meeting.");
+            }
+
+            const meeting = await response.json();
+
+            newMeetingSection.style.display = "block";
+            historySection.classList.remove("show");
+
+            pageTitle.textContent = "Meeting Details";
+
+            renderResults(meeting);
+
+            results.classList.add("show");
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        } catch (error) {
+
+            showError(
+                error.message ||
+                "Unable to load the selected meeting."
+            );
+        }
+    }
+
+    function showNewMeeting() {
+
+        historySection.classList.remove("show");
+        newMeetingSection.style.display = "block";
+
+        pageTitle.textContent = "New Meeting";
+
+        newMeetingNav.classList.add("active");
+        historyNav.classList.remove("active");
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+    function showHistory() {
+
+        newMeetingSection.style.display = "none";
+        historySection.classList.add("show");
+
+        pageTitle.textContent = "Meeting History";
+
+        historyNav.classList.add("active");
+        newMeetingNav.classList.remove("active");
+
+        loadMeetings();
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+    newMeetingNav.addEventListener("click", showNewMeeting);
+    historyNav.addEventListener("click", showHistory);
+
+    // Initial history request.
+    loadMeetings();
 </script>
+
 </body>
 </html>
